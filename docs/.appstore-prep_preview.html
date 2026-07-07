@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Store 上架准备（付费售卖）</title>
+    <style>body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.7;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px;
+    color: #1f2937;
+    background: #f8fafc;
+}
+.container {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    padding: 28px 32px;
+}
+h1, h2, h3, h4, h5, h6 {
+    color: #0f172a;
+    margin-top: 30px;
+    margin-bottom: 14px;
+}
+h1 {
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 10px;
+}
+code {
+    background-color: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+pre {
+    background-color: #0f172a;
+    color: #e2e8f0;
+    padding: 16px;
+    border-radius: 12px;
+    overflow-x: auto;
+}
+pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+}
+blockquote {
+    border-left: 4px solid #3b82f6;
+    margin: 0;
+    padding-left: 18px;
+    color: #475569;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px 0;
+}
+th, td {
+    border: 1px solid #dbe2ea;
+    padding: 12px;
+    text-align: left;
+}
+th {
+    background-color: #f8fafc;
+    font-weight: bold;
+}
+a { color: #2563eb; text-decoration: none; }
+a:hover { text-decoration: underline; }
+img { max-width: 100%; }
+.source-link {
+    display: inline-block;
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+</style>
+    
+</head>
+<body>
+    <div class="container">
+        <h1 id="app-store">App Store 上架准备（付费售卖）</h1>
+<h2 id="_1">一、开源协议结论</h2>
+<p>上游项目 <a href="https://github.com/xatuke/openauthenticator">xatuke/openauthenticator</a> 采用 <strong>MIT License</strong><br />
+（Copyright (c) 2026 Aayushman Choudhary，已通过 GitHub API 核实）。</p>
+<p><strong>二次开发并在 App Store 收费售卖不违反 MIT 协议。</strong> MIT 明确授予<br />
+use / copy / modify / merge / publish / distribute / sublicense / <strong>sell</strong> 的权利，且无 copyleft<br />
+（不要求开源你的修改）。唯一义务：</p>
+<ol>
+<li><strong>在分发物中保留原版权声明和许可文本</strong> —— 已放入仓库根目录 <code>ACKNOWLEDGMENTS.md</code>；<br />
+   上架版本建议在 App 内（如设置面板底部或"关于"里）加一个 Acknowledgments 入口展示它。</li>
+<li>MIT <strong>不授予商标/名称权</strong>：<code>OpenAuthenticator</code> 这个名字不受协议保护，上架必须改名<br />
+   （商店要求名称唯一）。</li>
+</ol>
+<h2 id="5authpop">一.5、品牌决定：AuthPop</h2>
+<p>已选定商用名称 <strong>AuthPop</strong>（备选：PopAuth、OtpPop —— 提交前在 App Store Connect /<br />
+微软 Partner Center 保留名称时如被占用则顺延备选）。Windows 版工程已直接以 AuthPop 命名。</p>
+<p>macOS 端<strong>暂未改名</strong>（本地开发版改名会导致：辅助功能 TCC 授权失效需重授、<br />
+Keychain service 变更丢数据、Raycast 脚本路径失效），在提交 App Store 前一次性改：</p>
+<ol>
+<li><code>project.yml</code>：CFBundleName/CFBundleDisplayName → <code>AuthPop</code>，<br />
+   PRODUCT_BUNDLE_IDENTIFIER → <code>com.authpop.mac</code>（keychain-access-groups 同步改）。</li>
+<li><code>Keychain.swift</code> 的 <code>service</code> 常量：新装用户无影响；如需带老数据迁移，读旧<br />
+   service 写新 service 一次。</li>
+<li>图标品牌重做（现图标可留用，assets/ 为本仓库自制，不属上游）。</li>
+</ol>
+<h2 id="_2">二、账号准备（你后面办）</h2>
+<ul>
+<li>Apple Developer Program：99 USD/年，个人或公司主体均可收费售卖。<br />
+  公司主体需要 D-U-N-S 编号（免费申请，约 1-2 周）。</li>
+<li>收款需在 App Store Connect 填税务与银行信息（大陆银行卡可收美元结算）。</li>
+</ul>
+<h2 id="_3">三、技术改造清单（上架前必须做）</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>事项</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>开启 App Sandbox</strong></td>
+<td>App Store 硬性要求。entitlements 增加：<code>com.apple.security.app-sandbox</code>、<code>com.apple.security.files.user-selected.read-only</code>（文件导入）、<code>com.apple.security.device.camera</code>（扫码导入）</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>1PUX 解压去掉 /usr/bin/unzip</strong></td>
+<td>沙盒内 spawn 外部进程不可靠，换成内置解压（如 ZIPFoundation 或 Compression framework）</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Enter 粘贴功能评估</strong></td>
+<td>合成 Cmd+V 依赖辅助功能授权，沙盒内技术上可行（Paste 等上架应用先例），但有审核风险；保留现有"未授权自动降级为复制"逻辑即可</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>签名切换</strong></td>
+<td>目前用本地自签/ad-hoc（build-oa.sh）。上架需回到 Xcode 工程（<code>xcodegen generate</code>），Team 换成你的开发者账号，Archive 后走 App Store Connect 分发</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>隐私材料</strong></td>
+<td><code>PrivacyInfo.xcprivacy</code>（声明不收集数据）、隐私政策 URL（必填，一页静态页即可）、相机用途描述（已在 Info.plist）</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>版本与图标</strong></td>
+<td>1024px 商店图标已有（assets/AppIcon-1024.png）；CFBundleShortVersionString 规范化</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>⚠️ 清理仓库敏感文件</strong></td>
+<td><code>Sources/OpenAuthenticator/2026-06-30-145820-google-authenticator.txt</code> 疑似真实导出数据，务必移出仓库并确认未提交过 git 历史</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_4">四、上架流程（拿到账号后）</h2>
+<ol>
+<li>App Store Connect 新建 App（名称、Bundle ID、SKU、类目：工具/效率）。</li>
+<li>定价：直接选付费档位（如 ¥18 / $2.99），无需内购。</li>
+<li>Xcode Archive → Distribute → App Store Connect 上传。</li>
+<li>填写截图（菜单栏 + 弹窗两组）、描述、关键词、隐私政策 URL、隐私问卷（"不收集数据"）。</li>
+<li>提交审核；备注里说明辅助功能权限用途（Enter 粘贴验证码），降低被拒概率。</li>
+</ol>
+<h2 id="windows">五、Windows / 微软商店版</h2>
+<p>Windows 版是全新代码（Swift → C#/.NET，无法复用一行），属于<strong>完全自研</strong>，与上游 MIT<br />
+协议无任何牵连，收费上架微软商店无许可问题。TOTP 算法本身是公开标准（RFC 6238 / RFC 4226），<br />
+不构成对任何项目的派生。详见 <code>windows/</code> 目录及其 README。</p>
+        <p class="source-link">Source: /Users/liwei/Documents/games/emulator/openauthenticator/docs/appstore-prep.md</p>
+    </div>
+</body>
+</html>
